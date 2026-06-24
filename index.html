@@ -1,18 +1,156 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>My First Game</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coin Hunter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:linear-gradient(to bottom,#1a1a2e,#16213e);
+    font-family:Arial;
+    color:white;
+}
+
+#game{
+    width:100vw;
+    height:100vh;
+    position:relative;
+}
+
+#player{
+    width:80px;
+    height:80px;
+    background:gold;
+    border-radius:50%;
+    position:absolute;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+}
+
+.coin{
+    width:40px;
+    height:40px;
+    background:yellow;
+    border-radius:50%;
+    position:absolute;
+}
+
+#score{
+    position:absolute;
+    top:20px;
+    left:20px;
+    font-size:30px;
+}
+
+#timer{
+    position:absolute;
+    top:20px;
+    right:20px;
+    font-size:30px;
+}
+
+#gameOver{
+    display:none;
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    text-align:center;
+    font-size:40px;
+}
+</style>
 </head>
+
 <body>
-  <h1>My First Game</h1>
-  <button onclick="score++ ; document.getElementById('score').innerText = score">
-    Click Me
-  </button>
 
-  <p>Score: <span id="score">0</span></p>
+<div id="game">
+    <div id="score">Score: 0</div>
+    <div id="timer">60</div>
+    <div id="player"></div>
 
-  <script>
-    let score = 0;
-  </script>
+    <div id="gameOver">
+        <h1>Game Over</h1>
+        <p id="finalScore"></p>
+        <button onclick="location.reload()">Play Again</button>
+    </div>
+</div>
+
+<script>
+
+let player = document.getElementById("player");
+let score = 0;
+let time = 60;
+let playerX = window.innerWidth/2;
+
+document.addEventListener("mousemove",(e)=>{
+    playerX = e.clientX;
+    player.style.left = playerX + "px";
+});
+
+function createCoin(){
+
+    let coin = document.createElement("div");
+    coin.className="coin";
+
+    let x = Math.random()*(window.innerWidth-40);
+
+    coin.style.left=x+"px";
+    coin.style.top="-40px";
+
+    document.getElementById("game").appendChild(coin);
+
+    let fall=setInterval(()=>{
+
+        let top=parseInt(coin.style.top);
+        coin.style.top=(top+5)+"px";
+
+        let coinRect=coin.getBoundingClientRect();
+        let playerRect=player.getBoundingClientRect();
+
+        if(
+            coinRect.bottom > playerRect.top &&
+            coinRect.left < playerRect.right &&
+            coinRect.right > playerRect.left
+        ){
+            score++;
+            document.getElementById("score").innerHTML="Score: "+score;
+            coin.remove();
+            clearInterval(fall);
+        }
+
+        if(top>window.innerHeight){
+            coin.remove();
+            clearInterval(fall);
+        }
+
+    },20);
+
+}
+
+setInterval(createCoin,700);
+
+let gameTimer=setInterval(()=>{
+
+    time--;
+    document.getElementById("timer").innerHTML=time;
+
+    if(time<=0){
+
+        clearInterval(gameTimer);
+
+        document.getElementById("gameOver").style.display="block";
+        document.getElementById("finalScore").innerHTML=
+        "Your Score: "+score;
+
+    }
+
+},1000);
+
+</script>
+
 </body>
 </html>
