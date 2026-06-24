@@ -1,66 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Coin Hunter</title>
-
+<title>Sky Fighter</title>
 <style>
 body{
-    margin:0;
-    overflow:hidden;
-    background:linear-gradient(to bottom,#1a1a2e,#16213e);
-    font-family:Arial;
-    color:white;
+  margin:0;
+  overflow:hidden;
+  background:linear-gradient(#07162e,#123b6d);
+  font-family:Arial;
+  color:white;
 }
-
 #game{
-    width:100vw;
-    height:100vh;
-    position:relative;
+  width:100vw;
+  height:100vh;
+  position:relative;
+  cursor:none;
 }
-
-#player{
-    width:80px;
-    height:80px;
-    background:gold;
-    border-radius:50%;
-    position:absolute;
-    bottom:20px;
-    left:50%;
-    transform:translateX(-50%);
+#plane{
+  position:absolute;
+  bottom:30px;
+  left:50%;
+  font-size:70px;
+  transform:translateX(-50%);
 }
-
-.coin{
-    width:40px;
-    height:40px;
-    background:yellow;
-    border-radius:50%;
-    position:absolute;
+.enemy{
+  position:absolute;
+  font-size:55px;
 }
-
+.bullet{
+  position:absolute;
+  width:8px;
+  height:25px;
+  background:#00eaff;
+  border-radius:10px;
+  box-shadow:0 0 15px #00eaff;
+}
 #score{
-    position:absolute;
-    top:20px;
-    left:20px;
-    font-size:30px;
+  position:absolute;
+  top:20px;
+  left:20px;
+  font-size:30px;
 }
-
-#timer{
-    position:absolute;
-    top:20px;
-    right:20px;
-    font-size:30px;
-}
-
-#gameOver{
-    display:none;
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    text-align:center;
-    font-size:40px;
+#msg{
+  position:absolute;
+  top:20px;
+  right:20px;
+  font-size:22px;
 }
 </style>
 </head>
@@ -68,88 +54,100 @@ body{
 <body>
 
 <div id="game">
-    <div id="score">Score: 0</div>
-    <div id="timer">60</div>
-    <div id="player"></div>
-
-    <div id="gameOver">
-        <h1>Game Over</h1>
-        <p id="finalScore"></p>
-        <button onclick="location.reload()">Play Again</button>
-    </div>
+  <div id="score">Score: 0</div>
+  <div id="msg">حرك الماوس واضغط لإطلاق النار</div>
+  <div id="plane">✈️</div>
 </div>
 
 <script>
+let game = document.getElementById("game");
+let plane = document.getElementById("plane");
+let scoreBox = document.getElementById("score");
 
-let player = document.getElementById("player");
 let score = 0;
-let time = 60;
-let playerX = window.innerWidth/2;
+let mouseX = window.innerWidth / 2;
 
-document.addEventListener("mousemove",(e)=>{
-    playerX = e.clientX;
-    player.style.left = playerX + "px";
+document.addEventListener("mousemove", function(e){
+  mouseX = e.clientX;
+  plane.style.left = mouseX + "px";
 });
 
-function createCoin(){
+document.addEventListener("click", shoot);
 
-    let coin = document.createElement("div");
-    coin.className="coin";
+function shoot(){
+  let bullet = document.createElement("div");
+  bullet.className = "bullet";
 
-    let x = Math.random()*(window.innerWidth-40);
+  bullet.style.left = (mouseX - 4) + "px";
+  bullet.style.top = (window.innerHeight - 120) + "px";
 
-    coin.style.left=x+"px";
-    coin.style.top="-40px";
+  game.appendChild(bullet);
 
-    document.getElementById("game").appendChild(coin);
+  let moveBullet = setInterval(function(){
+    let top = parseInt(bullet.style.top);
+    bullet.style.top = (top - 15) + "px";
 
-    let fall=setInterval(()=>{
+    document.querySelectorAll(".enemy").forEach(function(enemy){
+      if(hit(bullet, enemy)){
+        score++;
+        scoreBox.innerHTML = "Score: " + score;
 
-        let top=parseInt(coin.style.top);
-        coin.style.top=(top+5)+"px";
+        enemy.innerHTML = "💥";
+        setTimeout(function(){
+          enemy.remove();
+        },150);
 
-        let coinRect=coin.getBoundingClientRect();
-        let playerRect=player.getBoundingClientRect();
+        bullet.remove();
+        clearInterval(moveBullet);
+      }
+    });
 
-        if(
-            coinRect.bottom > playerRect.top &&
-            coinRect.left < playerRect.right &&
-            coinRect.right > playerRect.left
-        ){
-            score++;
-            document.getElementById("score").innerHTML="Score: "+score;
-            coin.remove();
-            clearInterval(fall);
-        }
-
-        if(top>window.innerHeight){
-            coin.remove();
-            clearInterval(fall);
-        }
-
-    },20);
-
+    if(top < -30){
+      bullet.remove();
+      clearInterval(moveBullet);
+    }
+  },20);
 }
 
-setInterval(createCoin,700);
+function createEnemy(){
+  let enemy = document.createElement("div");
+  enemy.className = "enemy";
+  enemy.innerHTML = Math.random() > 0.5 ? "🛸" : "🚁";
 
-let gameTimer=setInterval(()=>{
+  enemy.style.left = Math.random() * (window.innerWidth - 60) + "px";
+  enemy.style.top = "-70px";
 
-    time--;
-    document.getElementById("timer").innerHTML=time;
+  game.appendChild(enemy);
 
-    if(time<=0){
+  let moveEnemy = setInterval(function(){
+    let top = parseInt(enemy.style.top);
+    enemy.style.top = (top + 3) + "px";
 
-        clearInterval(gameTimer);
-
-        document.getElementById("gameOver").style.display="block";
-        document.getElementById("finalScore").innerHTML=
-        "Your Score: "+score;
-
+    if(hit(enemy, plane)){
+      alert("Game Over! Score: " + score);
+      location.reload();
     }
 
-},1000);
+    if(top > window.innerHeight){
+      enemy.remove();
+      clearInterval(moveEnemy);
+    }
+  },25);
+}
 
+function hit(a,b){
+  let r1 = a.getBoundingClientRect();
+  let r2 = b.getBoundingClientRect();
+
+  return !(
+    r1.bottom < r2.top ||
+    r1.top > r2.bottom ||
+    r1.right < r2.left ||
+    r1.left > r2.right
+  );
+}
+
+setInterval(createEnemy,900);
 </script>
 
 </body>
